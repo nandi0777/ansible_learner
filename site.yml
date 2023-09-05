@@ -1,0 +1,44 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: update package for PopOs
+    apt:
+      upgrade: dist
+      update_cache: yes
+    when: ansible_distribution == "Pop!_OS"
+
+  - name: update package for redhat
+    dnf:
+      update_only: yes
+      update_cache: yes
+    when: ansible_distribution == "RedHat"
+
+- hosts: web_server
+  become: true
+  tasks:
+
+  - name: install nfs package
+    apt:
+      name:
+        - nfs-server
+      state: latest
+    when: ansible_distribution == "Pop!_OS"
+
+  - name: install nfs package
+    dnf:
+      name:
+        - nfs-utils
+      state: latest
+    when: ansible_distribution == "RedHat"
+
+- hosts: file_server
+  become: true
+  tasks:
+
+  - name: install samba package
+    package:
+      name: samba
+      state: latest
