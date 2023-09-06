@@ -5,12 +5,14 @@
   tasks:
 
   - name: update package for PopOs
+    tags: always
     apt:
       upgrade: dist
       update_cache: yes
     when: ansible_distribution == "Pop!_OS"
 
   - name: update package for redhat
+    tags: always
     dnf:
       update_only: yes
       update_cache: yes
@@ -21,6 +23,7 @@
   tasks:
 
   - name: install nfs package
+    tags: nfs popos
     apt:
       name:
         - nfs-server
@@ -28,6 +31,7 @@
     when: ansible_distribution == "Pop!_OS"
 
   - name: install nfs package
+    tags: nfs redhat
     dnf:
       name:
         - nfs-utils
@@ -39,6 +43,7 @@
   tasks:
 
   - name: install samba package
+    tags: samba smb popos
     package:
       name: samba
       state: latest
