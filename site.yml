@@ -22,28 +22,40 @@
   become: true
   tasks:
 
-  - name: install nfs package
-    tags: nfs popos
+  - name: install apache and php package
+    tags: apache,apache2,php,popos
     apt:
       name:
-        - nfs-server
+        - apache2
+        - libapache2-mod-php
       state: latest
     when: ansible_distribution == "Pop!_OS"
 
-  - name: install nfs package
-    tags: nfs redhat
+  - name: install apache and php package
+    tags: apache,php,httpd,redhat
     dnf:
       name:
-        - nfs-utils
+        - httpd
+        - php
       state: latest
     when: ansible_distribution == "RedHat"
+
+  - name: copy default html file
+    tags: apache,apache2,httpd
+    copy:
+      src: default_site.html
+      dest: /var/www/html/index.html
+      owner: root
+      group: root
+      mode:  0644
+
 
 - hosts: file_server
   become: true
   tasks:
 
   - name: install samba package
-    tags: samba smb popos
+    tags: samba,smb,popos
     package:
       name: samba
       state: latest
