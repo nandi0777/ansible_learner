@@ -4,46 +4,110 @@
   become: true
   tasks:
 
-  - name: update package for PopOs
+  - name: update cache for PopOs
     tags: always
     apt:
-      upgrade: dist
       update_cache: yes
+    changed_when: false
     when: ansible_distribution == "Pop!_OS"
 
-  - name: update package for redhat
+  - name: update cache for redhat
     tags: always
     dnf:
-      update_only: yes
       update_cache: yes
+    changed_when: false
     when: ansible_distribution == "RedHat"
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: copy ssh file to user simone
+    tags: always
+    authorized_key:
+      user: simone
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE/byK21aN96WJhRhp1jCgr/IhaFyhhZDwSXssyBLyUM ansible"
+
+- hosts: workstation
+  become: true
+  tasks:
+
+  - name: install unzip
+    package:
+      name: unzip
+
+  - name: install terraform
+    unarchive:
+      src: https://releases.hashicorp.com/terraform/1.5.6/terraform_1.5.6_linux_amd64.zip
+      dest: /usr/local/bin
+      remote_src: yes
+      mode: 0755
+      owner: root
+      group: root
+
 
 - hosts: web_server
   become: true
   tasks:
 
-  - name: install nfs package
-    tags: nfs popos
+  - name: install apache and php package
+    tags: apache,apache2,php,popos
     apt:
       name:
-        - nfs-server
+        - apache2
+        - libapache2-mod-php
       state: latest
     when: ansible_distribution == "Pop!_OS"
 
-  - name: install nfs package
-    tags: nfs redhat
+  - name: install apache and php package
+    tags: apache,php,httpd,redhat
     dnf:
       name:
-        - nfs-utils
+        - httpd
+        - php
       state: latest
     when: ansible_distribution == "RedHat"
+
+  - name: start httpd service
+    tags: apache,httpd,redhat
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+    when: ansible_distribution == "RedHat"
+
+  - name: change email address for admin
+    tags: apache,httpd,redhat
+    lineinfile:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^ServerAdmin'
+      line: ServerAdmin root@localhost
+    when: ansible_distribution == "RedHat"
+    register: httpd
+
+  - name: restart httpd service
+    tags: apache,httpd,redhat
+    service:
+      name: httpd
+      state: restarted
+    when: httpd.changed
+
+  - name: copy default html file
+    tags: apache,apache2,httpd
+    copy:
+      src: default_site.html
+      dest: /var/www/html/index.html
+      owner: root
+      group: root
+      mode:  0644
+
 
 - hosts: file_server
   become: true
   tasks:
 
   - name: install samba package
-    tags: samba smb popos
+    tags: samba,smb,popos
     package:
       name: samba
       state: latest
